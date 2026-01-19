@@ -1,14 +1,15 @@
 """Main VideoProjectManager class."""
 
 from pathlib import Path
-from typing import Optional, Any, Dict
-from moviely.models import ProjectState, Clip
+from typing import Literal, Optional, Any, Dict
+from moviely.models import ProjectState, Clip, SearchResult
 from moviely.engine.actions import ActionRegistry
 from moviely.engine.renderer import Renderer
 from moviely.storage.json_store import JSONStore
 from moviely.storage.memory_store import MemoryStore
 from moviely.utils.templates import TemplateManager
 from moviely.utils.assets import AssetManager
+from moviely.services.search import SearchService
 from moviely.errors import MovielyError
 import logging
 
@@ -42,7 +43,10 @@ class VideoProjectManager:
         self.template_manager = TemplateManager(template_dir)
         self.asset_manager = AssetManager()
         self.renderer = Renderer()
-        
+
+        # Search service (lazy-initialized)
+        self._search_service: Optional[SearchService] = None
+
         # Current project state
         self.project: Optional[ProjectState] = None
     
@@ -233,8 +237,66 @@ class VideoProjectManager:
     
     def list_templates(self) -> list[str]:
         """List available templates.
-        
+
         Returns:
             List of template names
         """
         return self.template_manager.list_templates()
+
+    def _get_search_service(self) -> SearchService:
+        """Get or create the search service (lazy initialization)."""
+        if self._search_service is None:
+            self._search_service = SearchService()
+        return self._search_service
+
+    async def search_media(
+        self,
+        query: str,
+        provider: Literal["pexels", "pixabay"],
+        media_type: Literal["video", "image"],
+        limit: int = 10,
+    ) -> list[SearchResult]:
+        """Search for videos or images from a provider.
+
+        Args:
+            query: Search query string
+            provider: Media provider ("pexels" or "pixabay")
+            media_type: Type of media ("video" or "image")
+            limit: Maximum number of results (default 10, max 50)
+
+        Returns:
+            List of SearchResult objects
+        """
+        service = self._get_search_service()
+        results = await service.search_media(query, provider, media_type, limit)
+        logger.info(f"Found {len(results)} {media_type}s from {provider} for '{query}'")
+        return results
+
+    async def search_music(self, query: str, limit: int = 10) -> list[SearchResult]:
+        """Search for music tracks from Jamendo.
+
+        Args:
+            query: Search query string
+            limit: Maximum number of results (default 10, max 50)
+
+        Returns:
+            List of SearchResult objects
+        """
+        service = self._get_search_service()
+        results = await service.search_music(query, limit)
+        logger.info(f"Found {len(results)} music tracks for '{query}'")
+        return results
+
+    async def download_media(self, result: SearchResult) -> Path:
+        """Download a search result to local cache.
+
+        Args:
+            result: SearchResult to download
+
+        Returns:
+            Path to the downloaded file
+        """
+        service = self._get_search_service()
+        path = await service.download(result)
+        logger.info(f"Downloaded media to: {path}")
+        return path

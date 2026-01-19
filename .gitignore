@@ -19,6 +19,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+.env
 
 # Virtual Environment
 .venv/
@@ -46,6 +47,7 @@ htmlcov/
 *.flv
 *.wmv
 *.webm
+*.mp3
 
 # Output files
 output/

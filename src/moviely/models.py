@@ -12,6 +12,20 @@ class Effect(BaseModel):
     parameters: Dict[str, Any] = Field(default_factory=dict, description="Effect parameters")
 
 
+class SearchResult(BaseModel):
+    """Represents a search result from a media provider."""
+    id: str = Field(..., description="Unique identifier from the provider")
+    url: str = Field(..., description="Download URL for the media")
+    preview_url: Optional[str] = Field(None, description="Preview/thumbnail URL")
+    provider: Literal["pexels", "pixabay", "jamendo"] = Field(..., description="Media provider")
+    media_type: Literal["video", "image", "audio"] = Field(..., description="Type of media")
+    duration: Optional[float] = Field(None, description="Duration in seconds (video/audio)")
+    width: Optional[int] = Field(None, description="Width in pixels (video/image)")
+    height: Optional[int] = Field(None, description="Height in pixels (video/image)")
+    title: Optional[str] = Field(None, description="Title or description")
+    author: Optional[str] = Field(None, description="Author/creator name")
+
+
 class Clip(BaseModel):
     """Represents a media clip in the project."""
     id: str = Field(..., description="Unique identifier for the clip")

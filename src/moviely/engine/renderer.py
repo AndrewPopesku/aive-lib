@@ -38,7 +38,7 @@ class Renderer:
         project: ProjectState,
         output_path: str,
         codec: str = "libx264",
-        audio_codec: str = "aac",
+        audio_codec: str = "libmp3lame",
         preset: str = "medium",
     ) -> Path:
         """Render the project to a video file.
@@ -149,12 +149,13 @@ class Renderer:
 
         elif clip.type == "audio":
             audio = AudioFileClip(clip.source).subclipped(0, clip.duration)
-            # Audio clips need a visual placeholder
+            # Audio clips need a transparent visual placeholder
+            # Use a 1x1 transparent clip to avoid blocking video content
             moviepy_clip = ColorClip(
-                size=project.resolution,
+                size=(1, 1),
                 color=(0, 0, 0),
                 duration=clip.duration
-            ).with_audio(audio)
+            ).with_opacity(0).with_audio(audio)
 
         elif clip.type == "image":
             moviepy_clip = ImageClip(clip.source).with_duration(clip.duration)

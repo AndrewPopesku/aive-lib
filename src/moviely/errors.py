@@ -29,3 +29,13 @@ class ValidationError(MovielyError):
 class AssetError(MovielyError):
     """Raised when asset operations fail."""
     pass
+
+
+class SearchError(MovielyError):
+    """Raised when search operations fail."""
+    pass
+
+
+class SearchConfigError(SearchError):
+    """Raised when API keys are missing or invalid."""
+    pass

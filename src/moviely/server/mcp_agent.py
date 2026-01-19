@@ -3,6 +3,7 @@
 from mcp.server import Server
 from mcp.types import Tool, TextContent, Resource
 from moviely.manager import VideoProjectManager
+from moviely.models import SearchResult
 from moviely.errors import MovielyError
 import json
 import logging
@@ -137,6 +138,70 @@ async def list_tools() -> list[Tool]:
                 "required": ["filename"]
             }
         ),
+        Tool(
+            name="search_media",
+            description="Search for videos or images from Pexels or Pixabay",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "Search query"},
+                    "provider": {
+                        "type": "string",
+                        "enum": ["pexels", "pixabay"],
+                        "description": "Media provider"
+                    },
+                    "media_type": {
+                        "type": "string",
+                        "enum": ["video", "image"],
+                        "description": "Type of media to search for"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum number of results (default: 10, max: 50)",
+                        "default": 10
+                    }
+                },
+                "required": ["query", "provider", "media_type"]
+            }
+        ),
+        Tool(
+            name="search_music",
+            description="Search for music tracks from Jamendo",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "Search query"},
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum number of results (default: 10, max: 50)",
+                        "default": 10
+                    }
+                },
+                "required": ["query"]
+            }
+        ),
+        Tool(
+            name="download_media",
+            description="Download a search result to local cache for use with add_clip",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "provider": {
+                        "type": "string",
+                        "enum": ["pexels", "pixabay", "jamendo"],
+                        "description": "Provider name from search result"
+                    },
+                    "media_id": {"type": "string", "description": "ID from search result"},
+                    "url": {"type": "string", "description": "Download URL from search result"},
+                    "media_type": {
+                        "type": "string",
+                        "enum": ["video", "image", "audio"],
+                        "description": "Type of media"
+                    }
+                },
+                "required": ["provider", "media_id", "url", "media_type"]
+            }
+        ),
     ]
 
 
@@ -232,7 +297,45 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 type="text",
                 text=f"Loaded project: {result.name}"
             )]
-        
+
+        elif name == "search_media":
+            results = await manager.search_media(
+                query=arguments["query"],
+                provider=arguments["provider"],
+                media_type=arguments["media_type"],
+                limit=arguments.get("limit", 10)
+            )
+            results_data = [r.model_dump() for r in results]
+            return [TextContent(
+                type="text",
+                text=json.dumps(results_data, indent=2)
+            )]
+
+        elif name == "search_music":
+            results = await manager.search_music(
+                query=arguments["query"],
+                limit=arguments.get("limit", 10)
+            )
+            results_data = [r.model_dump() for r in results]
+            return [TextContent(
+                type="text",
+                text=json.dumps(results_data, indent=2)
+            )]
+
+        elif name == "download_media":
+            # Reconstruct SearchResult from arguments
+            result = SearchResult(
+                id=arguments["media_id"],
+                url=arguments["url"],
+                provider=arguments["provider"],
+                media_type=arguments["media_type"]
+            )
+            path = await manager.download_media(result)
+            return [TextContent(
+                type="text",
+                text=f"Downloaded to: {path}"
+            )]
+
         else:
             return [TextContent(
                 type="text",

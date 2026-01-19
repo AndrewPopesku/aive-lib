@@ -1,0 +1,92 @@
+{
+  "name": "Educational Landscape",
+  "resolution": [
+    1920,
+    1080
+  ],
+  "fps": 30,
+  "clips": [
+    {
+      "id": "clip_f38c3e85",
+      "type": "text",
+      "source": "Welcome to Learning",
+      "start": 0.0,
+      "duration": 5.0,
+      "track_layer": 1,
+      "effects": [
+      ],
+      "volume": 1.0
+    },
+    {
+      "id": "clip_3ee91eb6",
+      "type": "video",
+      "source": "/Users/andriipopesku/.moviely/cache/pexels_5734826.mp4",
+      "start": 5.0,
+      "duration": 11.5,
+      "track_layer": 1,
+      "effects": [],
+      "volume": 1.0
+    },
+    {
+      "id": "clip_864ba186",
+      "type": "text",
+      "source": "Interactive Learning in Action",
+      "start": 5.0,
+      "duration": 10.0,
+      "track_layer": 2,
+      "effects": [
+        {
+          "type": "fade",
+          "parameters": {
+            "fade_in": 0.5,
+            "fade_out": 0.5
+          }
+        }
+      ],
+      "volume": 1.0
+    },
+    {
+      "id": "clip_eb0a99c9",
+      "type": "video",
+      "source": "/Users/andriipopesku/.moviely/cache/pexels_5427884.mp4",
+      "start": 17.0,
+      "duration": 15.0,
+      "track_layer": 1,
+      "effects": [],
+      "volume": 1.0
+    },
+    {
+      "id": "clip_db5cd92d",
+      "type": "text",
+      "source": "Collaborative Education",
+      "start": 17.0,
+      "duration": 12.0,
+      "track_layer": 2,
+      "effects": [
+        {
+          "type": "fade",
+          "parameters": {
+            "fade_in": 0.5,
+            "fade_out": 0.5
+          }
+        }
+      ],
+      "volume": 1.0
+    },
+    {
+      "id": "clip_b5f009b5",
+      "type": "audio",
+      "source": "/Users/andriipopesku/.moviely/cache/jamendo_1684186.mp3",
+      "start": 0.0,
+      "duration": 32.0,
+      "track_layer": 3,
+      "effects": [],
+      "volume": 0.4
+    }
+  ],
+  "background_color": [
+    255,
+    255,
+    255
+  ]
+}
