@@ -1,9 +1,9 @@
-"""Moviely - Video automation framework for Python and LLMs."""
+"""aive - Video automation framework for Python and LLMs."""
 
-from moviely.models import ProjectState, Clip, Effect
-from moviely.manager import VideoProjectManager
-from moviely.errors import (
-    MovielyError,
+from aive.models import ProjectState, Clip, Effect
+from aive.manager import VideoProjectManager
+from aive.errors import (
+    aiveError,
     InvalidActionError,
     RenderError,
     StorageError,
@@ -18,7 +18,7 @@ __all__ = [
     "Clip",
     "Effect",
     "VideoProjectManager",
-    "MovielyError",
+    "aiveError",
     "InvalidActionError",
     "RenderError",
     "StorageError",

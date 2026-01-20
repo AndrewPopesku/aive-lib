@@ -8,7 +8,7 @@ This example demonstrates:
 - Building a complete lesson video
 """
 
-from moviely import VideoProjectManager
+from aive import VideoProjectManager
 
 def create_lesson_video():
     """Create an educational video with synced narration and visuals."""

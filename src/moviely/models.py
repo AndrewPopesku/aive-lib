@@ -1,4 +1,4 @@
-"""Core data models for Moviely using Pydantic."""
+"""Core data models for aive using Pydantic."""
 
 from typing import List, Literal, Optional, Dict, Any, Tuple
 from pydantic import BaseModel, Field, field_validator, model_validator

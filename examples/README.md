@@ -1,6 +1,6 @@
-# Moviely Examples
+# aive Examples
 
-This directory contains example scripts demonstrating various use cases of Moviely.
+This directory contains example scripts demonstrating various use cases of aive.
 
 ## Examples
 
@@ -47,7 +47,7 @@ uv run python examples/educational_video.py
 ```
 
 ### 4. mcp_usage.md
-**Using Moviely with Claude (MCP)**
+**Using aive with Claude (MCP)**
 
 Natural language video editing:
 - Setup instructions for MCP
@@ -59,9 +59,9 @@ Natural language video editing:
 
 Before running the examples, make sure you have:
 
-1. Moviely installed:
+1. aive installed:
 ```bash
-uv add moviely
+uv add aive
 ```
 
 2. Sample media files (adjust paths in the examples):
@@ -90,4 +90,4 @@ All examples are designed to be easily modified. Key things to customize:
 
 - Main documentation: See main README.md
 - API reference: Check docstrings in the source code
-- Issues: https://github.com/yourusername/moviely/issues
+- Issues: https://github.com/yourusername/aive/issues

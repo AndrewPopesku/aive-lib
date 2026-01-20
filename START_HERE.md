@@ -1,10 +1,10 @@
-# 🎬 START HERE - Moviely
+# 🎬 START HERE - aive
 
-Welcome to Moviely! This is your starting point.
+Welcome to aive! This is your starting point.
 
-## What is Moviely?
+## What is aive?
 
-Moviely is a **video automation framework** that lets you:
+aive is a **video automation framework** that lets you:
 - Create videos programmatically with Python
 - Edit videos using natural language with Claude (AI)
 - Build automated video pipelines
@@ -14,24 +14,24 @@ Moviely is a **video automation framework** that lets you:
 
 ### Step 1: Install
 ```bash
-cd moviely
+cd aive
 uv run python test_installation.py
 ```
 
 Expected output:
 ```
 ✅ All tests passed!
-Moviely is ready to use! 🎬
+aive is ready to use! 🎬
 ```
 
 ### Step 2: Run Your First Example
 ```bash
 uv run python -c "
-from moviely import VideoProjectManager
+from aive import VideoProjectManager
 
 manager = VideoProjectManager(storage_backend='memory')
 manager.create_project('First Video', (1920, 1080), 30)
-manager.add_clip('text', 'Hello Moviely!', duration=5.0)
+manager.add_clip('text', 'Hello aive!', duration=5.0)
 print('✓ Created a 5-second video project!')
 print(f'Project info: {manager.get_project_info()}')
 "
@@ -57,7 +57,7 @@ ls examples/
 
 ### Path B: Using with Claude (AI)
 1. Read: [examples/mcp_usage.md](examples/mcp_usage.md)
-2. Configure: Claude Desktop with moviely-server
+2. Configure: Claude Desktop with aive-server
 3. Start chatting: "Convert my video to TikTok format"
 
 ### Path C: Contributing
@@ -69,7 +69,7 @@ ls examples/
 
 ### Create a TikTok Video
 ```python
-from moviely import VideoProjectManager
+from aive import VideoProjectManager
 
 manager = VideoProjectManager()
 manager.load_template("tiktok_vertical")
@@ -99,8 +99,8 @@ manager.apply_action("apply_effect",
 ## 📁 Project Structure
 
 ```
-moviely/
-├── src/moviely/          # Core library (import from here)
+aive/
+├── src/aive/          # Core library (import from here)
 ├── tests/                # Test suite (all passing ✓)
 ├── examples/             # Learn by example
 ├── templates/            # Ready-to-use templates
@@ -164,7 +164,7 @@ Should see:
 
 ## 🚦 Next Steps
 
-1. ✅ You've installed Moviely
+1. ✅ You've installed aive
 2. ⏭️ Run [test_installation.py](test_installation.py)
 3. ⏭️ Read [QUICKSTART.md](QUICKSTART.md)
 4. ⏭️ Try [examples/basic_video.py](examples/basic_video.py)
@@ -182,4 +182,4 @@ Should see:
 
 ---
 
-🎬 **Happy video editing with Moviely!**
+🎬 **Happy video editing with aive!**

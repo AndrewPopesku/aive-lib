@@ -3,8 +3,8 @@
 from pathlib import Path
 from typing import Optional
 import json
-from moviely.models import ProjectState
-from moviely.errors import ValidationError
+from aive.models import ProjectState
+from aive.errors import ValidationError
 try:
     from importlib.resources import files
 except ImportError:
@@ -25,7 +25,7 @@ class TemplateManager:
             # Try to use package templates
             try:
                 if files:
-                    template_path = files('moviely').joinpath('../templates')
+                    template_path = files('aive').joinpath('../templates')
                     self.template_dir = Path(str(template_path))
                 else:
                     raise ImportError

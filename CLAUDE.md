@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Moviely is a video automation framework for Python and LLMs. It provides both a Python library API and an MCP (Model Context Protocol) server for LLM-controlled video editing.
+AIVE is a video automation framework for Python and LLMs. It provides both a Python library API and an MCP (Model Context Protocol) server for LLM-controlled video editing.
 
 ## Development Commands
 
@@ -39,7 +39,7 @@ uv run python examples/basic_video.py
 uv run python examples/tiktok_automation.py
 
 # Start MCP server (for LLM integration)
-uv run moviely-server
+uv run aive-server
 ```
 
 ### Development Setup
@@ -60,47 +60,47 @@ uv sync --dev
 
 ### Key Components
 
-**VideoProjectManager** ([manager.py](src/moviely/manager.py))
+**VideoProjectManager** ([manager.py](src/aive/manager.py))
 - Central orchestrator that coordinates all components
 - Maintains current project state (`self.project: Optional[ProjectState]`)
 - Delegates to specialized components (storage, renderer, actions, templates, assets)
 - Provides high-level API for both Python and MCP interfaces
 
-**Data Models** ([models.py](src/moviely/models.py))
+**Data Models** ([models.py](src/aive/models.py))
 - `ProjectState`: Complete project state with clips, resolution, fps, background color
 - `Clip`: Individual media clip with source, timing, effects, volume
 - `Effect`: Video effect with type and parameters
 - All models use Pydantic for validation and JSON serialization
 
-**Action Registry** ([engine/actions.py](src/moviely/engine/actions.py))
+**Action Registry** ([engine/actions.py](src/aive/engine/actions.py))
 - Registry pattern for video editing operations
 - Actions are pure functions: `(ProjectState, **kwargs) -> ProjectState`
 - Built-in actions: add_clip, remove_clip, trim_clip, apply_effect, set_volume, crop_vertical
 - Add new actions by decorating with `@ActionRegistry.register("name")`
 
-**Storage Layer** ([storage/](src/moviely/storage/))
+**Storage Layer** ([storage/](src/aive/storage/))
 - Abstract interface with two implementations:
   - `JSONStore`: File-based persistence
   - `MemoryStore`: In-memory storage for testing
 - Manager selects backend via `storage_backend` parameter
 
-**Renderer** ([engine/renderer.py](src/moviely/engine/renderer.py))
+**Renderer** ([engine/renderer.py](src/aive/engine/renderer.py))
 - MoviePy-based rendering engine
 - Handles multi-layer composition based on track_layer
 - Applies effects (fade, crop, resize) to clips
 - Configurable codec and preset for rendering
 
-**Template System** ([utils/templates.py](src/moviely/utils/templates.py))
+**Template System** ([utils/templates.py](src/aive/utils/templates.py))
 - Templates are JSON files defining project presets
 - Located in `templates/` directory
 - Built-in: tiktok_vertical, youtube_landscape, edu_landscape
 - Templates define resolution, fps, background_color, and optional initial clips
 
-**MCP Server** ([server/mcp_agent.py](src/moviely/server/mcp_agent.py))
+**MCP Server** ([server/mcp_agent.py](src/aive/server/mcp_agent.py))
 - Exposes 10 MCP tools for LLM control
 - Creates singleton `VideoProjectManager` instance
 - Maps MCP tool calls to manager methods
-- Entry point: `moviely-server` command defined in pyproject.toml
+- Entry point: `aive-server` command defined in pyproject.toml
 
 ### Data Flow
 
@@ -135,7 +135,7 @@ uv sync --dev
 
 ### Adding a New Action
 
-1. Define action function in [engine/actions.py](src/moviely/engine/actions.py):
+1. Define action function in [engine/actions.py](src/aive/engine/actions.py):
 ```python
 @ActionRegistry.register("your_action")
 def your_action(context: ProjectState, **kwargs) -> ProjectState:
@@ -165,7 +165,7 @@ def your_action(context: ProjectState, **kwargs) -> ProjectState:
 
 ### Adding a New Storage Backend
 
-1. Implement storage interface (see [storage/memory_store.py](src/moviely/storage/memory_store.py) for example)
+1. Implement storage interface (see [storage/memory_store.py](src/aive/storage/memory_store.py) for example)
 2. Methods needed: save_project, load_project, list_projects, delete_project, project_exists
 3. Update VideoProjectManager.__init__() to support new backend
 4. Add tests in [tests/test_storage.py](tests/test_storage.py)
@@ -194,13 +194,13 @@ def your_action(context: ProjectState, **kwargs) -> ProjectState:
 
 ## Key File References
 
-- Main API: [manager.py](src/moviely/manager.py) - VideoProjectManager class
-- Data models: [models.py](src/moviely/models.py) - ProjectState, Clip, Effect
-- Actions: [engine/actions.py](src/moviely/engine/actions.py) - ActionRegistry and built-in actions
-- Rendering: [engine/renderer.py](src/moviely/engine/renderer.py) - MoviePy integration
-- MCP Server: [server/mcp_agent.py](src/moviely/server/mcp_agent.py) - LLM integration
-- Templates: [utils/templates.py](src/moviely/utils/templates.py) - Template management
-- Storage: [storage/json_store.py](src/moviely/storage/json_store.py), [storage/memory_store.py](src/moviely/storage/memory_store.py)
+- Main API: [manager.py](src/aive/manager.py) - VideoProjectManager class
+- Data models: [models.py](src/aive/models.py) - ProjectState, Clip, Effect
+- Actions: [engine/actions.py](src/aive/engine/actions.py) - ActionRegistry and built-in actions
+- Rendering: [engine/renderer.py](src/aive/engine/renderer.py) - MoviePy integration
+- MCP Server: [server/mcp_agent.py](src/aive/server/mcp_agent.py) - LLM integration
+- Templates: [utils/templates.py](src/aive/utils/templates.py) - Template management
+- Storage: [storage/json_store.py](src/aive/storage/json_store.py), [storage/memory_store.py](src/aive/storage/memory_store.py)
 
 ## Dependencies
 

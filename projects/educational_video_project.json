@@ -13,14 +13,13 @@
       "start": 0.0,
       "duration": 5.0,
       "track_layer": 1,
-      "effects": [
-      ],
+      "effects": [],
       "volume": 1.0
     },
     {
       "id": "clip_3ee91eb6",
       "type": "video",
-      "source": "/Users/andriipopesku/.moviely/cache/pexels_5734826.mp4",
+      "source": "/Users/andriipopesku/.aive/cache/pexels_5734826.mp4",
       "start": 5.0,
       "duration": 11.5,
       "track_layer": 1,
@@ -48,7 +47,7 @@
     {
       "id": "clip_eb0a99c9",
       "type": "video",
-      "source": "/Users/andriipopesku/.moviely/cache/pexels_5427884.mp4",
+      "source": "/Users/andriipopesku/.aive/cache/pexels_5427884.mp4",
       "start": 17.0,
       "duration": 15.0,
       "track_layer": 1,
@@ -76,7 +75,7 @@
     {
       "id": "clip_b5f009b5",
       "type": "audio",
-      "source": "/Users/andriipopesku/.moviely/cache/jamendo_1684186.mp3",
+      "source": "/Users/andriipopesku/.aive/cache/jamendo_1684186.mp3",
       "start": 0.0,
       "duration": 32.0,
       "track_layer": 3,

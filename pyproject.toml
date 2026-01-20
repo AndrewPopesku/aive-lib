@@ -1,5 +1,5 @@
 [project]
-name = "moviely"
+name = "aive"
 version = "0.1.0"
 description = "Video automation framework for Python and LLMs"
 readme = "README.md"
@@ -22,7 +22,7 @@ requires = ["uv_build>=0.9.18,<0.10.0"]
 build-backend = "uv_build"
 
 [project.scripts]
-moviely-server = "moviely.server.mcp_agent:main"
+aive-server = "aive.server.mcp_agent:main"
 
 [dependency-groups]
 dev = [

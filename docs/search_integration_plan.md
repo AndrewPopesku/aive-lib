@@ -1,6 +1,6 @@
 # Add Search Capabilities (Pexels, Pixabay, Jamendo)
 
-Add search and download capabilities to the `moviely` MCP server, allowing agents to find and use stock footage (video, images) and music from Pexels, Pixabay, and Jamendo.
+Add search and download capabilities to the `aive` MCP server, allowing agents to find and use stock footage (video, images) and music from Pexels, Pixabay, and Jamendo.
 
 ## User Review Required
 
@@ -19,13 +19,13 @@ Add search and download capabilities to the `moviely` MCP server, allowing agent
 
 ### Step 2: Add Error Classes
 
-**[MODIFY]** [src/moviely/errors.py](../src/moviely/errors.py)
-- Add `SearchError(MovielyError)` - base for search-related errors
+**[MODIFY]** [src/aive/errors.py](../src/aive/errors.py)
+- Add `SearchError(aiveError)` - base for search-related errors
 - Add `SearchConfigError(SearchError)` - raised when API keys are missing
 
 ### Step 3: Add SearchResult Model
 
-**[MODIFY]** [src/moviely/models.py](../src/moviely/models.py)
+**[MODIFY]** [src/aive/models.py](../src/aive/models.py)
 - Add `SearchResult` Pydantic model:
 
 ```python
@@ -45,10 +45,10 @@ class SearchResult(BaseModel):
 
 ### Step 4: Create Search Service
 
-**[NEW]** `src/moviely/services/__init__.py`
+**[NEW]** `src/aive/services/__init__.py`
 - Empty init file to create services package
 
-**[NEW]** `src/moviely/services/search.py`
+**[NEW]** `src/aive/services/search.py`
 - Create async `SearchService` class with:
   - `__init__(cache_dir: Path)` - configurable download cache directory
   - `async search_media(query, provider, media_type, limit) -> list[SearchResult]`
@@ -64,7 +64,7 @@ class SearchResult(BaseModel):
 
 ### Step 5: Integrate with Manager
 
-**[MODIFY]** [src/moviely/manager.py](../src/moviely/manager.py)
+**[MODIFY]** [src/aive/manager.py](../src/aive/manager.py)
 - Add `SearchService` as optional component (lazy-initialized)
 - Add methods:
   - `async search_media(query, provider, media_type, limit) -> list[SearchResult]`
@@ -73,7 +73,7 @@ class SearchResult(BaseModel):
 
 ### Step 6: Register MCP Tools
 
-**[MODIFY]** [src/moviely/server/mcp_agent.py](../src/moviely/server/mcp_agent.py)
+**[MODIFY]** [src/aive/server/mcp_agent.py](../src/aive/server/mcp_agent.py)
 
 Add 3 new unified tools:
 
@@ -368,7 +368,7 @@ Add 3 new unified tools:
 ## File Structure After Implementation
 
 ```
-src/moviely/
+src/aive/
 ├── services/
 │   ├── __init__.py
 │   └── search.py          # NEW: SearchService
@@ -407,5 +407,5 @@ uv run pytest tests/test_search.py -v
 
 3. Test via MCP server (requires MCP client):
    ```bash
-   uv run moviely-server
+   uv run aive-server
    ```

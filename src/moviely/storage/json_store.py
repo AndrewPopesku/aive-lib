@@ -3,8 +3,8 @@
 from pathlib import Path
 from typing import Optional
 import json
-from moviely.models import ProjectState
-from moviely.errors import StorageError
+from aive.models import ProjectState
+from aive.errors import StorageError
 
 
 class JSONStore:

@@ -1,7 +1,7 @@
-# Moviely Project Summary
+# AIVE Project Summary
 
 ## Project Overview
-Moviely is a complete video automation framework for Python and LLMs, built from scratch using `uv` for package management.
+AIVE is a complete video automation framework for Python and LLMs, built from scratch using `uv` for package management.
 
 ## Implementation Status: ✅ COMPLETE
 
@@ -10,8 +10,8 @@ All planned features have been implemented and tested.
 ## Project Structure
 
 ```
-moviely/
-├── src/moviely/
+aive/
+├── src/aive/
 │   ├── __init__.py              # Package exports
 │   ├── models.py                # Pydantic models (ProjectState, Clip, Effect)
 │   ├── manager.py               # Main VideoProjectManager class
@@ -151,7 +151,7 @@ dev = [
 
 ### Python Library
 ```python
-from moviely import VideoProjectManager
+from aive import VideoProjectManager
 
 manager = VideoProjectManager()
 manager.load_template("tiktok_vertical")
@@ -161,15 +161,15 @@ manager.render("output.mp4")
 
 ### MCP Server
 ```bash
-moviely-server
+aive-server
 ```
 
 Configure in Claude Desktop:
 ```json
 {
   "mcpServers": {
-    "moviely": {
-      "command": "moviely-server"
+    "aive": {
+      "command": "aive-server"
     }
   }
 }
@@ -179,10 +179,10 @@ Configure in Claude Desktop:
 
 ```bash
 # Using uv
-uv add moviely
+uv add aive
 
 # Using pip
-pip install moviely
+pip install aive
 ```
 
 ## Verification
@@ -195,7 +195,7 @@ uv run python test_installation.py
 Expected output:
 ```
 ✅ All tests passed!
-Moviely is ready to use! 🎬
+aive is ready to use! 🎬
 ```
 
 ## What Works
@@ -241,7 +241,7 @@ uv run ruff check src/ tests/
 uv run python examples/basic_video.py
 
 # Start MCP server
-uv run moviely-server
+uv run aive-server
 ```
 
 ## Architecture Highlights
@@ -263,7 +263,7 @@ uv run moviely-server
 
 ## Ready for Use
 
-Moviely is production-ready for:
+aive is production-ready for:
 - Python developers building video automation
 - Content creators using Claude for video editing
 - Educational content generation

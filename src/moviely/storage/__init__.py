@@ -1,6 +1,6 @@
-"""Storage backends for Moviely."""
+"""Storage backends for aive."""
 
-from moviely.storage.json_store import JSONStore
-from moviely.storage.memory_store import MemoryStore
+from aive.storage.json_store import JSONStore
+from aive.storage.memory_store import MemoryStore
 
 __all__ = ["JSONStore", "MemoryStore"]

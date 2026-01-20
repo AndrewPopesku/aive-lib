@@ -2,15 +2,15 @@
 
 from pathlib import Path
 from typing import Literal, Optional, Any, Dict
-from moviely.models import ProjectState, Clip, Track, SearchResult
-from moviely.engine.actions import ActionRegistry
-from moviely.engine.renderer import Renderer
-from moviely.storage.json_store import JSONStore
-from moviely.storage.memory_store import MemoryStore
-from moviely.utils.templates import TemplateManager
-from moviely.utils.assets import AssetManager
-from moviely.services.search import SearchService
-from moviely.errors import MovielyError
+from aive.models import ProjectState, Clip, Track, SearchResult
+from aive.engine.actions import ActionRegistry
+from aive.engine.renderer import Renderer
+from aive.storage.json_store import JSONStore
+from aive.storage.memory_store import MemoryStore
+from aive.utils.templates import TemplateManager
+from aive.utils.assets import AssetManager
+from aive.services.search import SearchService
+from aive.errors import aiveError
 import logging
 
 logger = logging.getLogger(__name__)
@@ -38,7 +38,7 @@ class VideoProjectManager:
         elif storage_backend == "memory":
             self.storage = MemoryStore()
         else:
-            raise MovielyError(f"Unknown storage backend: {storage_backend}")
+            raise aiveError(f"Unknown storage backend: {storage_backend}")
 
         self.template_manager = TemplateManager(template_dir)
         self.asset_manager = AssetManager()
@@ -106,7 +106,7 @@ class VideoProjectManager:
             Path to saved file
         """
         if not self.project:
-            raise MovielyError("No active project to save")
+            raise aiveError("No active project to save")
 
         result = self.storage.save(self.project, filename)
         logger.info(f"Saved project: {result}")
@@ -136,7 +136,7 @@ class VideoProjectManager:
             Updated project state
         """
         if not self.project:
-            raise MovielyError("No active project")
+            raise aiveError("No active project")
 
         self.project = ActionRegistry.execute(action_name, self.project, **kwargs)
         logger.info(f"Applied action: {action_name}")
@@ -161,7 +161,7 @@ class VideoProjectManager:
             Created track
         """
         if not self.project:
-            raise MovielyError("No active project")
+            raise aiveError("No active project")
 
         self.apply_action("create_track", track_type=track_type, track_name=name)
         return self.project.tracks[-1]
@@ -216,7 +216,7 @@ class VideoProjectManager:
             Created clip
         """
         if not self.project:
-            raise MovielyError("No active project")
+            raise aiveError("No active project")
 
         # Resolve track
         if track_id is None:
@@ -231,7 +231,7 @@ class VideoProjectManager:
             track_type = track_type_map.get(clip_type, "video")
             track = self.get_default_track(track_type)
             if not track:
-                raise MovielyError(f"No {track_type} track available")
+                raise aiveError(f"No {track_type} track available")
             track_id = track.id
 
         # Validate asset if it's a media file
@@ -249,7 +249,7 @@ class VideoProjectManager:
         # Return the newly added clip
         track = self.project.get_track_by_id(track_id)
         if not track:
-            raise MovielyError(f"Track '{track_id}' not found after adding clip")
+            raise aiveError(f"Track '{track_id}' not found after adding clip")
         return track.clips[-1]
 
     def advanced_add_clip(
@@ -281,7 +281,7 @@ class VideoProjectManager:
             Created clip
         """
         if not self.project:
-            raise MovielyError("No active project")
+            raise aiveError("No active project")
 
         # Resolve track if needed
         if track_id is None:
@@ -291,7 +291,7 @@ class VideoProjectManager:
             track_type = track_type_map.get(clip_type, "video")
             track = self.get_default_track(track_type)
             if not track:
-                raise MovielyError(f"No {track_type} track available")
+                raise aiveError(f"No {track_type} track available")
             track_id = track.id
 
         # Validate
@@ -354,7 +354,7 @@ class VideoProjectManager:
             Created clip
         """
         if not self.project:
-            raise MovielyError("No active project")
+            raise aiveError("No active project")
 
         # Validate asset if it's a media file
         if clip_type not in ("text", "gap") and source:
@@ -372,7 +372,7 @@ class VideoProjectManager:
 
         track = self.project.get_track_by_id(track_id)
         if not track:
-            raise MovielyError(f"Track '{track_id}' not found after inserting clip")
+            raise aiveError(f"Track '{track_id}' not found after inserting clip")
         return track.clips[index]
 
     # =========================================================================
@@ -396,10 +396,10 @@ class VideoProjectManager:
             Path to rendered file
         """
         if not self.project:
-            raise MovielyError("No active project to render")
+            raise aiveError("No active project to render")
 
         if self.project.get_clip_count() == 0:
-            raise MovielyError("Project has no clips to render")
+            raise aiveError("Project has no clips to render")
 
         logger.info(f"Starting render to: {output_path}")
         return self.renderer.render(self.project, output_path, codec=codec, preset=preset)

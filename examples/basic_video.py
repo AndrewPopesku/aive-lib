@@ -8,7 +8,7 @@ This example demonstrates:
 - Rendering the final video
 """
 
-from moviely import VideoProjectManager
+from aive import VideoProjectManager
 
 def main():
     # Initialize manager
@@ -35,7 +35,7 @@ def main():
     print("Adding text overlay...")
     text_clip = manager.add_clip(
         clip_type="text",
-        source="Welcome to Moviely!",
+        source="Welcome to aive!",
         duration=5.0,
         start=2.0,
         track_layer=2

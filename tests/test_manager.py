@@ -2,8 +2,8 @@
 
 import pytest
 from pathlib import Path
-from moviely.manager import VideoProjectManager
-from moviely.errors import MovielyError
+from aive.manager import VideoProjectManager
+from aive.errors import aiveError
 import tempfile
 
 
@@ -189,13 +189,13 @@ def test_no_active_project_error():
     """Test that operations without active project raise error."""
     manager = VideoProjectManager(storage_backend="memory")
 
-    with pytest.raises(MovielyError, match="No active project"):
+    with pytest.raises(aiveError, match="No active project"):
         manager.save_project()
 
-    with pytest.raises(MovielyError, match="No active project"):
+    with pytest.raises(aiveError, match="No active project"):
         manager.render("output.mp4")
 
-    with pytest.raises(MovielyError, match="No active project"):
+    with pytest.raises(aiveError, match="No active project"):
         manager.add_clip("text", "test", 1.0)
 
 

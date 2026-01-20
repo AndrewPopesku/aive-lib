@@ -1,13 +1,13 @@
-# Contributing to Moviely
+# Contributing to AIVE
 
-Thank you for considering contributing to Moviely! This document provides guidelines and instructions for contributing.
+Thank you for considering contributing to AIVE! This document provides guidelines and instructions for contributing.
 
 ## Getting Started
 
 1. **Fork the repository**
    ```bash
-   gh repo fork yourusername/moviely --clone
-   cd moviely
+   gh repo fork yourusername/aive --clone
+   cd aive
    ```
 
 2. **Set up development environment**
@@ -33,7 +33,7 @@ Thank you for considering contributing to Moviely! This document provides guidel
 uv run pytest
 
 # Run with coverage
-uv run pytest --cov=moviely
+uv run pytest --cov=aive
 
 # Run specific test file
 uv run pytest tests/test_models.py
@@ -52,14 +52,14 @@ uv run black src/ tests/ examples/
 uv run ruff check src/ tests/ examples/
 
 # Type checking (if using mypy)
-uv run mypy src/moviely
+uv run mypy src/aive
 ```
 
 ### Project Structure
 
 ```
-moviely/
-├── src/moviely/          # Main package
+aive/
+├── src/aive/          # Main package
 │   ├── models.py         # Pydantic models
 │   ├── manager.py        # Main manager class
 │   ├── errors.py         # Custom exceptions
@@ -100,7 +100,7 @@ moviely/
 To add a new video editing action:
 
 ```python
-# src/moviely/engine/actions.py
+# src/aive/engine/actions.py
 
 @ActionRegistry.register("your_action_name")
 def your_action(context: ProjectState, **kwargs) -> ProjectState:
@@ -179,7 +179,7 @@ def add_clip(
         Created clip
         
     Raises:
-        MovielyError: If no active project
+        aiveError: If no active project
         AssetError: If source file not found
     """
 ```
@@ -195,7 +195,7 @@ def add_clip(
 Example test structure:
 ```python
 import pytest
-from moviely import VideoProjectManager
+from aive import VideoProjectManager
 
 def test_feature_success():
     """Test successful operation."""
@@ -205,7 +205,7 @@ def test_feature_success():
 
 def test_feature_error():
     """Test error handling."""
-    with pytest.raises(MovielyError, match="error message"):
+    with pytest.raises(aiveError, match="error message"):
         # ... test implementation
 ```
 
@@ -290,7 +290,7 @@ test(storage): add tests for JSON persistence
 ### Bug Reports
 
 Include:
-- Moviely version
+- aive version
 - Python version
 - Operating system
 - Steps to reproduce
@@ -319,4 +319,4 @@ Include:
 - Focus on constructive feedback
 - Assume good intentions
 
-Thank you for contributing to Moviely! 🎬
+Thank you for contributing to aive! 🎬

@@ -1,8 +1,8 @@
-# Moviely
+# AIVE
 
 **Video automation framework for Python and LLMs**
 
-Moviely is a powerful video editing framework that can be used both as a Python library and through Large Language Models (LLMs) via MCP (Model Context Protocol). Perfect for automated video generation, TikTok creators, educational content, and more.
+AIVE is a powerful video editing framework that can be used both as a Python library and through Large Language Models (LLMs) via MCP (Model Context Protocol). Perfect for automated video generation, TikTok creators, educational content, and more.
 
 ## Features
 
@@ -17,10 +17,10 @@ Moviely is a powerful video editing framework that can be used both as a Python 
 
 ```bash
 # Using uv (recommended)
-uv add moviely
+uv add aive
 
 # Using pip
-pip install moviely
+pip install aive
 ```
 
 ## Quick Start
@@ -28,7 +28,7 @@ pip install moviely
 ### As a Python Library
 
 ```python
-from moviely import VideoProjectManager
+from aive import VideoProjectManager
 
 # Create a manager
 manager = VideoProjectManager()
@@ -62,17 +62,17 @@ manager.render("output.mp4")
 
 ### As an MCP Server (for LLMs)
 
-1. Install moviely:
+1. Install aive:
 ```bash
-uv add moviely
+uv add aive
 ```
 
 2. Configure your MCP client (e.g., Claude Desktop):
 ```json
 {
   "mcpServers": {
-    "moviely": {
-      "command": "moviely-server"
+    "aive": {
+      "command": "aive-server"
     }
   }
 }
@@ -196,7 +196,7 @@ manager.render(
 ## Architecture
 
 ```
-moviely/
+aive/
 ├── models.py           # Pydantic models (ProjectState, Clip, Effect)
 ├── manager.py          # Main VideoProjectManager class
 ├── engine/
@@ -216,8 +216,8 @@ moviely/
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/moviely.git
-cd moviely
+git clone https://github.com/yourusername/aive.git
+cd aive
 
 # Install with dev dependencies
 uv sync --dev
@@ -239,18 +239,18 @@ See the `examples/` directory for complete examples:
 - `basic_video.py`: Simple video composition
 - `tiktok_automation.py`: Automated TikTok video creation
 - `educational_video.py`: Educational content with synced audio
-- `mcp_usage.md`: Using Moviely with Claude
+- `mcp_usage.md`: Using aive with Claude
 
 ## Error Handling
 
 ```python
-from moviely.errors import MovielyError, RenderError, InvalidActionError
+from aive.errors import aiveError, RenderError, InvalidActionError
 
 try:
     manager.render("output.mp4")
 except RenderError as e:
     print(f"Rendering failed: {e}")
-except MovielyError as e:
+except aiveError as e:
     print(f"General error: {e}")
 ```
 
@@ -278,9 +278,9 @@ Contributions are welcome! Please:
 
 ## Support
 
-- Documentation: https://moviely.readthedocs.io
-- Issues: https://github.com/yourusername/moviely/issues
-- Discussions: https://github.com/yourusername/moviely/discussions
+- Documentation: https://aive.readthedocs.io
+- Issues: https://github.com/yourusername/aive/issues
+- Discussions: https://github.com/yourusername/aive/discussions
 
 ## Roadmap
 

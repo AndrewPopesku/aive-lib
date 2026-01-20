@@ -1,7 +1,7 @@
 """Tests for core models."""
 
 import pytest
-from moviely.models import ProjectState, Clip, Effect, Track
+from aive.models import ProjectState, Clip, Effect, Track
 
 
 def test_clip_creation():

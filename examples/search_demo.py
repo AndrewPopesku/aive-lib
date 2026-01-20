@@ -15,7 +15,7 @@ Requirements:
 """
 
 import asyncio
-from moviely import VideoProjectManager
+from aive import VideoProjectManager
 
 
 async def main():
@@ -23,7 +23,7 @@ async def main():
     manager = VideoProjectManager()
 
     print("=" * 50)
-    print("Moviely Search Demo")
+    print("aive Search Demo")
     print("=" * 50)
 
     # 1. Search for background video on Pexels

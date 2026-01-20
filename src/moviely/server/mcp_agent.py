@@ -1,608 +1,365 @@
-"""MCP server for Moviely - allows LLMs to control video editing."""
+"""MCP server for aive - allows LLMs to control video editing."""
 
-from mcp.server import Server
-from mcp.types import Tool, TextContent, Resource
-from moviely.manager import VideoProjectManager
-from moviely.models import SearchResult
-from moviely.errors import MovielyError
+from mcp.server.fastmcp import FastMCP
+from aive.manager import VideoProjectManager
+from aive.models import SearchResult
+from aive.errors import aiveError
 import json
 import logging
+from typing import Literal, Optional
 
 import sys
 logging.basicConfig(level=logging.INFO, stream=sys.stderr)
 logger = logging.getLogger(__name__)
 
 # Initialize the server and manager
-app = Server("moviely")
+mcp = FastMCP("aive")
 manager = VideoProjectManager()
 
 
-@app.list_tools()
-async def list_tools() -> list[Tool]:
-    """List available MCP tools."""
-    return [
-        Tool(
-            name="create_project",
-            description="Create a new video project with specified settings",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "name": {"type": "string", "description": "Project name"},
-                    "resolution": {
-                        "type": "array",
-                        "items": {"type": "integer"},
-                        "description": "Resolution [width, height]",
-                        "default": [1920, 1080]
-                    },
-                    "fps": {"type": "integer", "description": "Frames per second", "default": 30}
-                },
-                "required": ["name"]
-            }
-        ),
-        Tool(
-            name="load_template",
-            description="Load a project from a template (tiktok_vertical, youtube_landscape, edu_landscape)",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "template_name": {"type": "string", "description": "Name of template to load"}
-                },
-                "required": ["template_name"]
-            }
-        ),
-        Tool(
-            name="create_track",
-            description="Create a new track in the project",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "track_type": {
-                        "type": "string",
-                        "enum": ["video", "audio", "text"],
-                        "description": "Type of track"
-                    },
-                    "name": {"type": "string", "description": "Display name for the track"}
-                },
-                "required": ["track_type"]
-            }
-        ),
-        Tool(
-            name="append_clip",
-            description="Add a clip to end of timeline. This is a PRIMARY choice for simple additions.",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "clip_type": {
-                        "type": "string",
-                        "enum": ["video", "audio", "image", "text", "gap"],
-                        "description": "Type of clip"
-                    },
-                    "source": {
-                        "type": "string",
-                        "description": "Path to media file, text content, or null for gaps"
-                    },
-                    "duration": {"type": "number", "description": "Duration in seconds"},
-                    "track_id": {
-                        "type": "string",
-                        "description": "Target track ID (optional)"
-                    }
-                },
-                "required": ["clip_type", "duration"]
-            }
-        ),
-        Tool(
-            name="advanced_add_clip",
-            description="Advanced way to add a clip with full control over placement, trimming, and effects.",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "clip_type": {
-                        "type": "string",
-                        "enum": ["video", "audio", "image", "text", "gap"],
-                        "description": "Type of clip"
-                    },
-                    "source": {
-                        "type": "string",
-                        "description": "Path to media file, text content, or null for gaps"
-                    },
-                    "duration": {"type": "number", "description": "Duration in seconds"},
-                    "track_id": {
-                        "type": "string",
-                        "description": "Target track ID (optional)"
-                    },
-                    "index": {
-                        "type": "integer",
-                        "description": "Position to insert at (appends if omitted)"
-                    },
-                    "media_start": {
-                        "type": "number",
-                        "description": "Start offset in source media for trimming",
-                        "default": 0.0
-                    },
-                    "volume": {
-                        "type": "number",
-                        "description": "Audio volume multiplier (0.0 to 2.0)",
-                        "default": 1.0
-                    },
-                    "effects": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "type": {"type": "string"},
-                                "parameters": {"type": "object"}
-                            },
-                            "required": ["type"]
-                        },
-                        "description": "Initial effects to apply"
-                    }
-                },
-                "required": ["clip_type", "duration"]
-            }
-        ),
-        Tool(
-            name="delete_clip",
-            description="Delete a clip from the timeline",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "track_id": {"type": "string", "description": "Track ID containing the clip"},
-                    "clip_id": {"type": "string", "description": "ID of clip to delete (use this OR index)"},
-                    "index": {"type": "integer", "description": "Index of clip to delete (use this OR clip_id)"}
-                },
-                "required": ["track_id"]
-            }
-        ),
-        Tool(
-            name="move_clip",
-            description="Move a clip to a different position within the same track",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "track_id": {"type": "string", "description": "Track ID"},
-                    "from_index": {"type": "integer", "description": "Current position of the clip"},
-                    "to_index": {"type": "integer", "description": "Target position for the clip"}
-                },
-                "required": ["track_id", "from_index", "to_index"]
-            }
-        ),
-        Tool(
-            name="trim_clip",
-            description="Trim a clip by adjusting its start point or duration",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "track_id": {"type": "string", "description": "Track ID"},
-                    "clip_id": {"type": "string", "description": "ID of clip to trim (use this OR index)"},
-                    "index": {"type": "integer", "description": "Index of clip to trim (use this OR clip_id)"},
-                    "media_start": {"type": "number", "description": "New start offset in source media"},
-                    "duration": {"type": "number", "description": "New duration"}
-                },
-                "required": ["track_id"]
-            }
-        ),
-        Tool(
-            name="insert_clip",
-            description="Insert a clip at a specific position in a track. This is a PRIMARY choice for simple insertions.",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "clip_type": {
-                        "type": "string",
-                        "enum": ["video", "audio", "image", "text", "gap"],
-                        "description": "Type of clip"
-                    },
-                    "source": {
-                        "type": "string",
-                        "description": "Path to media file, text content, or null for gaps"
-                    },
-                    "duration": {"type": "number", "description": "Duration in seconds"},
-                    "track_id": {"type": "string", "description": "Target track ID"},
-                    "index": {"type": "integer", "description": "Position to insert at (0-based)"}
-                },
-                "required": ["clip_type", "duration", "track_id", "index"]
-            }
-        ),
-        Tool(
-            name="apply_action",
-            description="Apply an editing action (trim_clip, apply_effect, crop_vertical, set_clip_volume, delete_clip, move_clip, etc.)",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "action_name": {"type": "string", "description": "Name of action to apply"},
-                    "parameters": {"type": "object", "description": "Action parameters"}
-                },
-                "required": ["action_name", "parameters"]
-            }
-        ),
-        Tool(
-            name="render_project",
-            description="Render the project to a video file",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "output_path": {"type": "string", "description": "Output file path"},
-                    "codec": {"type": "string", "description": "Video codec", "default": "libx264"},
-                    "preset": {"type": "string", "description": "Encoding preset", "default": "medium"}
-                },
-                "required": ["output_path"]
-            }
-        ),
-        Tool(
-            name="get_project_info",
-            description="Get information about the current project including tracks and clips",
-            inputSchema={
-                "type": "object",
-                "properties": {}
-            }
-        ),
-        Tool(
-            name="list_actions",
-            description="List all available editing actions",
-            inputSchema={
-                "type": "object",
-                "properties": {}
-            }
-        ),
-        Tool(
-            name="list_templates",
-            description="List all available project templates",
-            inputSchema={
-                "type": "object",
-                "properties": {}
-            }
-        ),
-        Tool(
-            name="save_project",
-            description="Save the current project to storage",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "filename": {"type": "string", "description": "Optional filename"}
-                }
-            }
-        ),
-        Tool(
-            name="load_project",
-            description="Load a project from storage",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "filename": {"type": "string", "description": "Filename to load"}
-                },
-                "required": ["filename"]
-            }
-        ),
-        Tool(
-            name="search_media",
-            description="Search for videos or images from Pexels or Pixabay",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "query": {"type": "string", "description": "Search query"},
-                    "provider": {
-                        "type": "string",
-                        "enum": ["pexels", "pixabay"],
-                        "description": "Media provider"
-                    },
-                    "media_type": {
-                        "type": "string",
-                        "enum": ["video", "image"],
-                        "description": "Type of media to search for"
-                    },
-                    "limit": {
-                        "type": "integer",
-                        "description": "Maximum number of results (default: 10, max: 50)",
-                        "default": 10
-                    }
-                },
-                "required": ["query", "provider", "media_type"]
-            }
-        ),
-        Tool(
-            name="search_music",
-            description="Search for music tracks from Jamendo",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "query": {"type": "string", "description": "Search query"},
-                    "limit": {
-                        "type": "integer",
-                        "description": "Maximum number of results (default: 10, max: 50)",
-                        "default": 10
-                    }
-                },
-                "required": ["query"]
-            }
-        ),
-        Tool(
-            name="download_media",
-            description="Download a search result to local cache for use with add_clip",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "provider": {
-                        "type": "string",
-                        "enum": ["pexels", "pixabay", "jamendo"],
-                        "description": "Provider name from search result"
-                    },
-                    "media_id": {"type": "string", "description": "ID from search result"},
-                    "url": {"type": "string", "description": "Download URL from search result"},
-                    "media_type": {
-                        "type": "string",
-                        "enum": ["video", "image", "audio"],
-                        "description": "Type of media"
-                    }
-                },
-                "required": ["provider", "media_id", "url", "media_type"]
-            }
-        ),
-    ]
+# =============================================================================
+# Project Management Tools
+# =============================================================================
 
-
-@app.call_tool()
-async def call_tool(name: str, arguments: dict) -> list[TextContent]:
-    """Handle tool calls from the MCP client."""
+@mcp.tool()
+def create_project(
+    name: str,
+    resolution: list[int] = [1920, 1080],
+    fps: int = 30
+) -> str:
+    """Create a new video project with specified settings."""
     try:
-        logger.info(f"Tool called: {name} with args: {arguments}")
-
-        if name == "create_project":
-            result = manager.create_project(
-                name=arguments["name"],
-                resolution=tuple(arguments.get("resolution", [1920, 1080])),
-                fps=arguments.get("fps", 30)
-            )
-            track_names = [t.name for t in result.tracks]
-            return [TextContent(
-                type="text",
-                text=f"Created project: {result.name} ({result.resolution[0]}x{result.resolution[1]} @ {result.fps}fps) with tracks: {', '.join(track_names)}"
-            )]
-
-        elif name == "load_template":
-            result = manager.load_template(arguments["template_name"])
-            return [TextContent(
-                type="text",
-                text=f"Loaded template: {result.name}"
-            )]
-
-        elif name == "create_track":
-            track = manager.create_track(
-                track_type=arguments["track_type"],
-                name=arguments.get("name")
-            )
-            return [TextContent(
-                type="text",
-                text=f"Created track: {track.name} (id: {track.id}, type: {track.type})"
-            )]
-
-        elif name == "append_clip":
-            clip = manager.append_clip(
-                clip_type=arguments["clip_type"],
-                source=arguments.get("source"),
-                duration=arguments["duration"],
-                track_id=arguments.get("track_id"),
-            )
-            return [TextContent(
-                type="text",
-                text=f"Appended {clip.type} clip: {clip.id} (duration: {clip.duration}s)"
-            )]
-
-        elif name == "advanced_add_clip":
-            clip = manager.advanced_add_clip(
-                clip_type=arguments["clip_type"],
-                source=arguments.get("source"),
-                duration=arguments["duration"],
-                track_id=arguments.get("track_id"),
-                index=arguments.get("index"),
-                media_start=arguments.get("media_start", 0.0),
-                volume=arguments.get("volume", 1.0),
-                effects=arguments.get("effects")
-            )
-            pos_desc = f"at index {arguments['index']}" if arguments.get('index') is not None else "at end"
-            return [TextContent(
-                type="text",
-                text=f"Advanced added {clip.type} clip: {clip.id} {pos_desc} (duration: {clip.duration}s)"
-            )]
-
-        elif name == "delete_clip":
-            manager.apply_action(
-                "delete_clip",
-                track_id=arguments["track_id"],
-                clip_id=arguments.get("clip_id"),
-                index=arguments.get("index")
-            )
-            return [TextContent(
-                type="text",
-                text=f"Deleted clip from track {arguments['track_id']}"
-            )]
-
-        elif name == "move_clip":
-            manager.apply_action(
-                "move_clip",
-                track_id=arguments["track_id"],
-                from_index=arguments["from_index"],
-                to_index=arguments["to_index"]
-            )
-            return [TextContent(
-                type="text",
-                text=f"Moved clip from index {arguments['from_index']} to {arguments['to_index']} in track {arguments['track_id']}"
-            )]
-
-        elif name == "trim_clip":
-            manager.apply_action(
-                "trim_clip",
-                track_id=arguments["track_id"],
-                clip_id=arguments.get("clip_id"),
-                index=arguments.get("index"),
-                media_start=arguments.get("media_start"),
-                duration=arguments.get("duration")
-            )
-            return [TextContent(
-                type="text",
-                text=f"Trimmed clip in track {arguments['track_id']}"
-            )]
-
-        elif name == "insert_clip":
-            clip = manager.insert_clip(
-                clip_type=arguments["clip_type"],
-                source=arguments.get("source"),
-                duration=arguments["duration"],
-                track_id=arguments["track_id"],
-                index=arguments["index"]
-            )
-            return [TextContent(
-                type="text",
-                text=f"Inserted {clip.type} clip: {clip.id} at index {arguments['index']} (duration: {clip.duration}s)"
-            )]
-
-        elif name == "apply_action":
-            result = manager.apply_action(
-                arguments["action_name"],
-                **arguments.get("parameters", {})
-            )
-            return [TextContent(
-                type="text",
-                text=f"Applied action: {arguments['action_name']}"
-            )]
-
-        elif name == "render_project":
-            output = manager.render(
-                output_path=arguments["output_path"],
-                codec=arguments.get("codec", "libx264"),
-                preset=arguments.get("preset", "medium")
-            )
-            return [TextContent(
-                type="text",
-                text=f"Rendered project to: {output}"
-            )]
-
-        elif name == "get_project_info":
-            info = manager.get_project_info()
-            return [TextContent(
-                type="text",
-                text=json.dumps(info, indent=2)
-            )]
-
-        elif name == "list_actions":
-            actions = manager.list_actions()
-            return [TextContent(
-                type="text",
-                text=f"Available actions: {', '.join(actions)}"
-            )]
-
-        elif name == "list_templates":
-            templates = manager.list_templates()
-            return [TextContent(
-                type="text",
-                text=f"Available templates: {', '.join(templates)}"
-            )]
-
-        elif name == "save_project":
-            path = manager.save_project(arguments.get("filename"))
-            return [TextContent(
-                type="text",
-                text=f"Saved project to: {path}"
-            )]
-
-        elif name == "load_project":
-            result = manager.load_project(arguments["filename"])
-            return [TextContent(
-                type="text",
-                text=f"Loaded project: {result.name}"
-            )]
-
-        elif name == "search_media":
-            results = await manager.search_media(
-                query=arguments["query"],
-                provider=arguments["provider"],
-                media_type=arguments["media_type"],
-                limit=arguments.get("limit", 10)
-            )
-            results_data = [r.model_dump() for r in results]
-            return [TextContent(
-                type="text",
-                text=json.dumps(results_data, indent=2)
-            )]
-
-        elif name == "search_music":
-            results = await manager.search_music(
-                query=arguments["query"],
-                limit=arguments.get("limit", 10)
-            )
-            results_data = [r.model_dump() for r in results]
-            return [TextContent(
-                type="text",
-                text=json.dumps(results_data, indent=2)
-            )]
-
-        elif name == "download_media":
-            # Reconstruct SearchResult from arguments
-            result = SearchResult(
-                id=arguments["media_id"],
-                url=arguments["url"],
-                provider=arguments["provider"],
-                media_type=arguments["media_type"]
-            )
-            path = await manager.download_media(result)
-            return [TextContent(
-                type="text",
-                text=f"Downloaded to: {path}"
-            )]
-
-        else:
-            return [TextContent(
-                type="text",
-                text=f"Unknown tool: {name}"
-            )]
-
-    except MovielyError as e:
-        logger.error(f"Moviely error: {e}")
-        return [TextContent(
-            type="text",
-            text=f"Error: {str(e)}"
-        )]
-    except Exception as e:
-        logger.error(f"Unexpected error: {e}", exc_info=True)
-        return [TextContent(
-            type="text",
-            text=f"Unexpected error: {str(e)}"
-        )]
-
-
-@app.list_resources()
-async def list_resources() -> list[Resource]:
-    """List available resources."""
-    return [
-        Resource(
-            uri="moviely://project/state",
-            name="Current Project State",
-            mimeType="application/json",
-            description="The current project state as JSON"
+        res = (resolution[0], resolution[1]) if len(resolution) >= 2 else (1920, 1080)
+        result = manager.create_project(
+            name=name,
+            resolution=res,
+            fps=fps
         )
-    ]
+        track_names = [t.name for t in result.tracks]
+        return f"Created project: {result.name} ({result.resolution[0]}x{result.resolution[1]} @ {result.fps}fps) with tracks: {', '.join(track_names)}"
+    except aiveError as e:
+        return f"Error: {str(e)}"
 
 
-@app.read_resource()
-async def read_resource(uri: str) -> str:
-    """Read a resource."""
-    if uri == "moviely://project/state":
-        if manager.project:
-            return json.dumps(manager.project.model_dump(), indent=2)
-        return json.dumps({"error": "No active project"})
+@mcp.tool()
+def load_template(template_name: str) -> str:
+    """Load a project from a template (tiktok_vertical, youtube_landscape, edu_landscape)."""
+    try:
+        result = manager.load_template(template_name)
+        return f"Loaded template: {result.name}"
+    except aiveError as e:
+        return f"Error: {str(e)}"
 
-    return json.dumps({"error": f"Unknown resource: {uri}"})
 
+@mcp.tool()
+def save_project(filename: Optional[str] = None) -> str:
+    """Save the current project to storage."""
+    try:
+        path = manager.save_project(filename)
+        return f"Saved project to: {path}"
+    except aiveError as e:
+        return f"Error: {str(e)}"
+
+
+@mcp.tool()
+def load_project(filename: str) -> str:
+    """Load a project from storage."""
+    try:
+        result = manager.load_project(filename)
+        return f"Loaded project: {result.name}"
+    except aiveError as e:
+        return f"Error: {str(e)}"
+
+
+# =============================================================================
+# Track and Clip Tools
+# =============================================================================
+
+@mcp.tool()
+def create_track(
+    track_type: Literal["video", "audio", "text"],
+    name: Optional[str] = None
+) -> str:
+    """Create a new track in the project. track_type must be 'video', 'audio', or 'text'."""
+    try:
+        track = manager.create_track(track_type=track_type, name=name)
+        return f"Created track: {track.name} (id: {track.id}, type: {track.type})"
+    except aiveError as e:
+        return f"Error: {str(e)}"
+
+
+@mcp.tool()
+def append_clip(
+    clip_type: str,
+    duration: float,
+    source: Optional[str] = None,
+    track_id: Optional[str] = None
+) -> str:
+    """Add a clip to end of timeline. clip_type: video, audio, image, text, or gap."""
+    try:
+        clip = manager.append_clip(
+            clip_type=clip_type,
+            source=source,
+            duration=duration,
+            track_id=track_id,
+        )
+        return f"Appended {clip.type} clip: {clip.id} (duration: {clip.duration}s)"
+    except aiveError as e:
+        return f"Error: {str(e)}"
+
+
+@mcp.tool()
+def insert_clip(
+    clip_type: str,
+    duration: float,
+    track_id: str,
+    index: int,
+    source: Optional[str] = None
+) -> str:
+    """Insert a clip at a specific position in a track. clip_type: video, audio, image, text, or gap."""
+    try:
+        clip = manager.insert_clip(
+            clip_type=clip_type,
+            source=source,
+            duration=duration,
+            track_id=track_id,
+            index=index
+        )
+        return f"Inserted {clip.type} clip: {clip.id} at index {index} (duration: {clip.duration}s)"
+    except aiveError as e:
+        return f"Error: {str(e)}"
+
+
+@mcp.tool()
+def advanced_add_clip(
+    clip_type: str,
+    duration: float,
+    source: Optional[str] = None,
+    track_id: Optional[str] = None,
+    index: Optional[int] = None,
+    media_start: float = 0.0,
+    volume: float = 1.0,
+    effects: Optional[list[dict]] = None
+) -> str:
+    """Advanced way to add a clip with full control over placement, trimming, and effects."""
+    try:
+        clip = manager.advanced_add_clip(
+            clip_type=clip_type,
+            source=source,
+            duration=duration,
+            track_id=track_id,
+            index=index,
+            media_start=media_start,
+            volume=volume,
+            effects=effects
+        )
+        pos_desc = f"at index {index}" if index is not None else "at end"
+        return f"Advanced added {clip.type} clip: {clip.id} {pos_desc} (duration: {clip.duration}s)"
+    except aiveError as e:
+        return f"Error: {str(e)}"
+
+
+@mcp.tool()
+def delete_clip(
+    track_id: str,
+    clip_id: Optional[str] = None,
+    index: Optional[int] = None
+) -> str:
+    """Delete a clip from the timeline. Use clip_id OR index to identify the clip."""
+    try:
+        manager.apply_action(
+            "delete_clip",
+            track_id=track_id,
+            clip_id=clip_id,
+            index=index
+        )
+        return f"Deleted clip from track {track_id}"
+    except aiveError as e:
+        return f"Error: {str(e)}"
+
+
+@mcp.tool()
+def move_clip(track_id: str, from_index: int, to_index: int) -> str:
+    """Move a clip to a different position within the same track."""
+    try:
+        manager.apply_action(
+            "move_clip",
+            track_id=track_id,
+            from_index=from_index,
+            to_index=to_index
+        )
+        return f"Moved clip from index {from_index} to {to_index} in track {track_id}"
+    except aiveError as e:
+        return f"Error: {str(e)}"
+
+
+@mcp.tool()
+def trim_clip(
+    track_id: str,
+    clip_id: Optional[str] = None,
+    index: Optional[int] = None,
+    media_start: Optional[float] = None,
+    duration: Optional[float] = None
+) -> str:
+    """Trim a clip by adjusting its start point or duration. Use clip_id OR index."""
+    try:
+        manager.apply_action(
+            "trim_clip",
+            track_id=track_id,
+            clip_id=clip_id,
+            index=index,
+            media_start=media_start,
+            duration=duration
+        )
+        return f"Trimmed clip in track {track_id}"
+    except aiveError as e:
+        return f"Error: {str(e)}"
+
+
+# =============================================================================
+# Action and Info Tools
+# =============================================================================
+
+@mcp.tool()
+def apply_action(action_name: str, parameters: dict) -> str:
+    """Apply an editing action (trim_clip, apply_effect, crop_vertical, set_clip_volume, etc.)."""
+    try:
+        manager.apply_action(action_name, **parameters)
+        return f"Applied action: {action_name}"
+    except aiveError as e:
+        return f"Error: {str(e)}"
+
+
+@mcp.tool()
+def render_project(
+    output_path: str,
+    codec: str = "libx264",
+    preset: str = "medium"
+) -> str:
+    """Render the project to a video file."""
+    try:
+        output = manager.render(
+            output_path=output_path,
+            codec=codec,
+            preset=preset
+        )
+        return f"Rendered project to: {output}"
+    except aiveError as e:
+        return f"Error: {str(e)}"
+
+
+@mcp.tool()
+def get_project_info() -> str:
+    """Get information about the current project including tracks and clips."""
+    try:
+        info = manager.get_project_info()
+        return json.dumps(info, indent=2)
+    except aiveError as e:
+        return f"Error: {str(e)}"
+
+
+@mcp.tool()
+def list_actions() -> str:
+    """List all available editing actions."""
+    try:
+        actions = manager.list_actions()
+        return f"Available actions: {', '.join(actions)}"
+    except aiveError as e:
+        return f"Error: {str(e)}"
+
+
+@mcp.tool()
+def list_templates() -> str:
+    """List all available project templates."""
+    try:
+        templates = manager.list_templates()
+        return f"Available templates: {', '.join(templates)}"
+    except aiveError as e:
+        return f"Error: {str(e)}"
+
+
+# =============================================================================
+# Async Media Tools
+# =============================================================================
+
+@mcp.tool()
+async def search_media(
+    query: str,
+    provider: Literal["pexels", "pixabay"],
+    media_type: Literal["video", "image"],
+    limit: int = 10
+) -> str:
+    """Search for videos or images from Pexels or Pixabay."""
+    try:
+        results = await manager.search_media(
+            query=query,
+            provider=provider,
+            media_type=media_type,
+            limit=limit
+        )
+        results_data = [r.model_dump() for r in results]
+        return json.dumps(results_data, indent=2)
+    except aiveError as e:
+        return f"Error: {str(e)}"
+
+
+@mcp.tool()
+async def search_music(query: str, limit: int = 10) -> str:
+    """Search for music tracks from Jamendo."""
+    try:
+        results = await manager.search_music(query=query, limit=limit)
+        results_data = [r.model_dump() for r in results]
+        return json.dumps(results_data, indent=2)
+    except aiveError as e:
+        return f"Error: {str(e)}"
+
+
+@mcp.tool()
+async def download_media(
+    provider: Literal["pexels", "pixabay", "jamendo"],
+    media_id: str,
+    url: str,
+    media_type: Literal["video", "image", "audio"]
+) -> str:
+    """Download a search result to local cache for use with add_clip."""
+    try:
+        result = SearchResult(
+            id=media_id,
+            url=url,
+            provider=provider,
+            media_type=media_type,
+            preview_url=None,
+            duration=None,
+            width=None,
+            height=None,
+            title=None,
+            author=None
+        )
+        path = await manager.download_media(result)
+        return f"Downloaded to: {path}"
+    except aiveError as e:
+        return f"Error: {str(e)}"
+
+
+# =============================================================================
+# Resources
+# =============================================================================
+
+@mcp.resource("aive://project/state")
+def get_project_state() -> str:
+    """The current project state as JSON."""
+    if manager.project:
+        return json.dumps(manager.project.model_dump(), indent=2)
+    return json.dumps({"error": "No active project"})
+
+
+# =============================================================================
+# Entry Point
+# =============================================================================
 
 def main():
     """Main entry point for the MCP server."""
-    import asyncio
-    from mcp.server.stdio import stdio_server
-
-    async def run():
-        async with stdio_server() as (read_stream, write_stream):
-            await app.run(read_stream, write_stream, app.create_initialization_options())
-
-    asyncio.run(run())
+    mcp.run()
 
 
 if __name__ == "__main__":

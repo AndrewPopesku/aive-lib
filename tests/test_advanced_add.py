@@ -1,6 +1,6 @@
 import pytest
-from moviely.manager import VideoProjectManager
-from moviely.models import ProjectState
+from aive.manager import VideoProjectManager
+from aive.models import ProjectState
 
 def test_advanced_add_clip_append():
     """Test advanced_add_clip appends when no index is provided."""

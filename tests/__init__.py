@@ -1,1 +1,1 @@
-"""Tests for Moviely."""
+"""Tests for aive."""

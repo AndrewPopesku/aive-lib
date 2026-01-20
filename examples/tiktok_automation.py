@@ -8,7 +8,7 @@ This example shows how to:
 - Apply effects for engagement
 """
 
-from moviely import VideoProjectManager
+from aive import VideoProjectManager
 
 def create_tiktok_video(input_video: str, output_path: str = "tiktok_output.mp4"):
     """Create a TikTok-ready video from landscape footage."""

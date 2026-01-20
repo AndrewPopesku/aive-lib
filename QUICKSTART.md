@@ -1,11 +1,11 @@
-# Moviely Quick Start Guide
+# AIVE Quick Start Guide
 
-Get up and running with Moviely in 5 minutes!
+Get up and running with AIVE in 5 minutes!
 
 ## Installation
 
 ```bash
-uv add moviely
+uv add aive
 ```
 
 ## 30-Second Test
@@ -16,7 +16,7 @@ Verify installation works:
 uv run python test_installation.py
 ```
 
-You should see: `✅ All tests passed! Moviely is ready to use! 🎬`
+You should see: `✅ All tests passed! AIVE is ready to use! 🎬`
 
 ## Your First Video (5 minutes)
 
@@ -25,7 +25,7 @@ You should see: `✅ All tests passed! Moviely is ready to use! 🎬`
 Create a file `my_first_video.py`:
 
 ```python
-from moviely import VideoProjectManager
+from aive import VideoProjectManager
 
 # Create manager
 manager = VideoProjectManager()
@@ -40,7 +40,7 @@ manager.create_project(
 # Add a text clip (no external files needed!)
 manager.add_clip(
     clip_type="text",
-    source="Hello Moviely!",
+    source="Hello aive!",
     duration=5.0
 )
 
@@ -57,7 +57,7 @@ uv run python my_first_video.py
 ### Step 2: Use a Template
 
 ```python
-from moviely import VideoProjectManager
+from aive import VideoProjectManager
 
 manager = VideoProjectManager()
 
@@ -77,7 +77,7 @@ manager.render("tiktok_video.mp4")
 ### Step 3: Add Real Media
 
 ```python
-from moviely import VideoProjectManager
+from aive import VideoProjectManager
 
 manager = VideoProjectManager()
 manager.create_project("Real Video", (1920, 1080), 30)
@@ -163,9 +163,9 @@ print(f"Resolution: {info['resolution']}")
 
 ### Setup
 
-1. Install moviely:
+1. Install aive:
 ```bash
-uv add moviely
+uv add aive
 ```
 
 2. Edit Claude Desktop config:
@@ -176,8 +176,8 @@ uv add moviely
 ```json
 {
   "mcpServers": {
-    "moviely": {
-      "command": "moviely-server"
+    "aive": {
+      "command": "aive-server"
     }
   }
 }
@@ -208,8 +208,8 @@ Claude will:
 
 ## Troubleshooting
 
-### Issue: "No module named 'moviely'"
-**Solution**: Install with `uv add moviely`
+### Issue: "No module named 'aive'"
+**Solution**: Install with `uv add aive`
 
 ### Issue: "Source file does not exist"
 **Solution**: Use absolute paths or check file exists:
@@ -244,7 +244,7 @@ manager.add_clip(..., track_layer=2)  # Higher = on top
 #!/usr/bin/env python3
 """Complete working example - copy and run this!"""
 
-from moviely import VideoProjectManager
+from aive import VideoProjectManager
 
 def main():
     # Create manager
@@ -256,7 +256,7 @@ def main():
     # Add content (text-only, no files needed)
     manager.add_clip(
         clip_type="text",
-        source="Welcome to Moviely!",
+        source="Welcome to aive!",
         duration=3.0,
         start=0.0
     )
@@ -305,6 +305,6 @@ uv run python demo.py
 
 ---
 
-**You're ready to create videos with Moviely!** 🎬
+**You're ready to create videos with aive!** 🎬
 
 Need help? Check the examples or open an issue on GitHub.

@@ -5,9 +5,9 @@ import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
 import httpx
 
-from moviely.services.search import SearchService
-from moviely.models import SearchResult
-from moviely.errors import SearchConfigError, SearchError
+from aive.services.search import SearchService
+from aive.models import SearchResult
+from aive.errors import SearchConfigError, SearchError
 
 
 # Sample API responses

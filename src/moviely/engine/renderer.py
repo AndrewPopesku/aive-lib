@@ -12,8 +12,8 @@ from moviepy import (
     ColorClip,
     vfx,
 )
-from moviely.models import ProjectState, Clip, Track
-from moviely.errors import RenderError
+from aive.models import ProjectState, Clip, Track
+from aive.errors import RenderError
 import logging
 
 logger = logging.getLogger(__name__)

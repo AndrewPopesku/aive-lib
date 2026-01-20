@@ -1,37 +1,37 @@
-"""Custom exceptions for Moviely."""
+"""Custom exceptions for aive."""
 
 
-class MovielyError(Exception):
-    """Base exception for all Moviely errors."""
+class aiveError(Exception):
+    """Base exception for all aive errors."""
     pass
 
 
-class InvalidActionError(MovielyError):
+class InvalidActionError(aiveError):
     """Raised when an invalid action is requested."""
     pass
 
 
-class RenderError(MovielyError):
+class RenderError(aiveError):
     """Raised when rendering fails."""
     pass
 
 
-class StorageError(MovielyError):
+class StorageError(aiveError):
     """Raised when storage operations fail."""
     pass
 
 
-class ValidationError(MovielyError):
+class ValidationError(aiveError):
     """Raised when data validation fails."""
     pass
 
 
-class AssetError(MovielyError):
+class AssetError(aiveError):
     """Raised when asset operations fail."""
     pass
 
 
-class SearchError(MovielyError):
+class SearchError(aiveError):
     """Raised when search operations fail."""
     pass
 

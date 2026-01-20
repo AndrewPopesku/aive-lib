@@ -1,26 +1,26 @@
-# Using Moviely with MCP (Claude)
+# Using aive with MCP (Claude)
 
-This guide shows how to use Moviely through the MCP (Model Context Protocol) to control video editing via natural language with Claude.
+This guide shows how to use aive through the MCP (Model Context Protocol) to control video editing via natural language with Claude.
 
 ## Setup
 
-1. Install Moviely:
+1. Install aive:
 ```bash
-uv add moviely
+uv add aive
 ```
 
-2. Configure Claude Desktop to use the Moviely MCP server.
+2. Configure Claude Desktop to use the aive MCP server.
 
 Edit your Claude Desktop config file:
 - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - **Windows**: `%APPDATA%/Claude/claude_desktop_config.json`
 
-Add the moviely server:
+Add the aive server:
 ```json
 {
   "mcpServers": {
-    "moviely": {
-      "command": "moviely-server"
+    "aive": {
+      "command": "aive-server"
     }
   }
 }
@@ -104,7 +104,7 @@ All 5 videos have been processed and are ready!
 
 ## Available MCP Tools
 
-Claude has access to these Moviely tools:
+Claude has access to these aive tools:
 
 1. **create_project** - Create a new project
 2. **load_template** - Load a template (tiktok_vertical, youtube_landscape, edu_landscape)
@@ -154,8 +154,8 @@ with background music from audio.mp3"
 
 ## Troubleshooting
 
-If Claude can't find the moviely-server:
-1. Ensure moviely is installed: `uv add moviely`
+If Claude can't find the aive-server:
+1. Ensure aive is installed: `uv add aive`
 2. Check that the config path is correct
 3. Restart Claude Desktop
 
@@ -170,7 +170,7 @@ You can ask Claude to read the project state resource:
 
 **You**: Show me the current project state as JSON
 
-Claude will access the `moviely://project/state` resource and display the complete project structure.
+Claude will access the `aive://project/state` resource and display the complete project structure.
 
 ---
 

@@ -2,10 +2,10 @@
 
 import pytest
 from pathlib import Path
-from moviely.models import ProjectState, Clip, Track
-from moviely.storage.memory_store import MemoryStore
-from moviely.storage.json_store import JSONStore
-from moviely.errors import StorageError
+from aive.models import ProjectState, Clip, Track
+from aive.storage.memory_store import MemoryStore
+from aive.storage.json_store import JSONStore
+from aive.errors import StorageError
 import tempfile
 
 

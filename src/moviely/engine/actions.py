@@ -1,8 +1,8 @@
 """Action registry for video editing operations."""
 
 from typing import Callable, Dict, Any, Optional
-from moviely.models import ProjectState, Clip, Effect, Track
-from moviely.errors import InvalidActionError
+from aive.models import ProjectState, Clip, Effect, Track
+from aive.errors import InvalidActionError
 import uuid
 
 

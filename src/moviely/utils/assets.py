@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Optional
 import hashlib
-from moviely.errors import AssetError
+from aive.errors import AssetError
 
 
 class AssetManager:
@@ -15,7 +15,7 @@ class AssetManager:
         Args:
             cache_dir: Directory for caching assets
         """
-        self.cache_dir = cache_dir or Path.home() / ".moviely" / "cache"
+        self.cache_dir = cache_dir or Path.home() / ".aive" / "cache"
         self.cache_dir.mkdir(parents=True, exist_ok=True)
     
     def validate_asset(self, path: str) -> bool:

@@ -1,6 +1,6 @@
-"""Utility modules for Moviely."""
+"""Utility modules for aive."""
 
-from moviely.utils.assets import AssetManager
-from moviely.utils.templates import TemplateManager
+from aive.utils.assets import AssetManager
+from aive.utils.templates import TemplateManager
 
 __all__ = ["AssetManager", "TemplateManager"]

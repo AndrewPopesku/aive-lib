@@ -1,8 +1,8 @@
 """In-memory storage backend for testing."""
 
 from typing import Dict, Optional
-from moviely.models import ProjectState
-from moviely.errors import StorageError
+from aive.models import ProjectState
+from aive.errors import StorageError
 import copy
 
 

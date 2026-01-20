@@ -1,5 +1,5 @@
-"""Services package for Moviely."""
+"""Services package for aive."""
 
-from moviely.services.search import SearchService
+from aive.services.search import SearchService
 
 __all__ = ["SearchService"]

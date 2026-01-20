@@ -12,8 +12,8 @@ from urllib.parse import urlparse
 import aiofiles
 import httpx
 
-from moviely.errors import SearchConfigError, SearchError
-from moviely.models import SearchResult
+from aive.errors import SearchConfigError, SearchError
+from aive.models import SearchResult
 
 
 class SearchService:
@@ -30,9 +30,9 @@ class SearchService:
 
         Args:
             cache_dir: Directory for caching downloaded files.
-                      Defaults to ~/.moviely/cache
+                      Defaults to ~/.aive/cache
         """
-        self.cache_dir = cache_dir or Path.home() / ".moviely" / "cache"
+        self.cache_dir = cache_dir or Path.home() / ".aive" / "cache"
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self._client: Optional[httpx.AsyncClient] = None
 

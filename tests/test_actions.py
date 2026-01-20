@@ -1,9 +1,9 @@
 """Tests for action registry and actions."""
 
 import pytest
-from moviely.models import ProjectState, Clip, Track
-from moviely.engine.actions import ActionRegistry
-from moviely.errors import InvalidActionError
+from aive.models import ProjectState, Clip, Track
+from aive.engine.actions import ActionRegistry
+from aive.errors import InvalidActionError
 
 
 def create_project_with_track():
