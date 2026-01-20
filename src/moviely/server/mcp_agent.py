@@ -8,7 +8,8 @@ from moviely.errors import MovielyError
 import json
 import logging
 
-logging.basicConfig(level=logging.INFO)
+import sys
+logging.basicConfig(level=logging.INFO, stream=sys.stderr)
 logger = logging.getLogger(__name__)
 
 # Initialize the server and manager
@@ -50,27 +51,161 @@ async def list_tools() -> list[Tool]:
             }
         ),
         Tool(
-            name="add_clip",
-            description="Add a media clip to the project",
+            name="create_track",
+            description="Create a new track in the project",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "track_type": {
+                        "type": "string",
+                        "enum": ["video", "audio", "text"],
+                        "description": "Type of track"
+                    },
+                    "name": {"type": "string", "description": "Display name for the track"}
+                },
+                "required": ["track_type"]
+            }
+        ),
+        Tool(
+            name="append_clip",
+            description="Add a clip to end of timeline. This is a PRIMARY choice for simple additions.",
             inputSchema={
                 "type": "object",
                 "properties": {
                     "clip_type": {
                         "type": "string",
-                        "enum": ["video", "audio", "image", "text"],
+                        "enum": ["video", "audio", "image", "text", "gap"],
                         "description": "Type of clip"
                     },
-                    "source": {"type": "string", "description": "Path to media file or text content"},
+                    "source": {
+                        "type": "string",
+                        "description": "Path to media file, text content, or null for gaps"
+                    },
                     "duration": {"type": "number", "description": "Duration in seconds"},
-                    "start": {"type": "number", "description": "Start time in timeline", "default": 0.0},
-                    "track_layer": {"type": "integer", "description": "Layer number", "default": 1}
+                    "track_id": {
+                        "type": "string",
+                        "description": "Target track ID (optional)"
+                    }
                 },
-                "required": ["clip_type", "source", "duration"]
+                "required": ["clip_type", "duration"]
+            }
+        ),
+        Tool(
+            name="advanced_add_clip",
+            description="Advanced way to add a clip with full control over placement, trimming, and effects.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "clip_type": {
+                        "type": "string",
+                        "enum": ["video", "audio", "image", "text", "gap"],
+                        "description": "Type of clip"
+                    },
+                    "source": {
+                        "type": "string",
+                        "description": "Path to media file, text content, or null for gaps"
+                    },
+                    "duration": {"type": "number", "description": "Duration in seconds"},
+                    "track_id": {
+                        "type": "string",
+                        "description": "Target track ID (optional)"
+                    },
+                    "index": {
+                        "type": "integer",
+                        "description": "Position to insert at (appends if omitted)"
+                    },
+                    "media_start": {
+                        "type": "number",
+                        "description": "Start offset in source media for trimming",
+                        "default": 0.0
+                    },
+                    "volume": {
+                        "type": "number",
+                        "description": "Audio volume multiplier (0.0 to 2.0)",
+                        "default": 1.0
+                    },
+                    "effects": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "type": {"type": "string"},
+                                "parameters": {"type": "object"}
+                            },
+                            "required": ["type"]
+                        },
+                        "description": "Initial effects to apply"
+                    }
+                },
+                "required": ["clip_type", "duration"]
+            }
+        ),
+        Tool(
+            name="delete_clip",
+            description="Delete a clip from the timeline",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "track_id": {"type": "string", "description": "Track ID containing the clip"},
+                    "clip_id": {"type": "string", "description": "ID of clip to delete (use this OR index)"},
+                    "index": {"type": "integer", "description": "Index of clip to delete (use this OR clip_id)"}
+                },
+                "required": ["track_id"]
+            }
+        ),
+        Tool(
+            name="move_clip",
+            description="Move a clip to a different position within the same track",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "track_id": {"type": "string", "description": "Track ID"},
+                    "from_index": {"type": "integer", "description": "Current position of the clip"},
+                    "to_index": {"type": "integer", "description": "Target position for the clip"}
+                },
+                "required": ["track_id", "from_index", "to_index"]
+            }
+        ),
+        Tool(
+            name="trim_clip",
+            description="Trim a clip by adjusting its start point or duration",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "track_id": {"type": "string", "description": "Track ID"},
+                    "clip_id": {"type": "string", "description": "ID of clip to trim (use this OR index)"},
+                    "index": {"type": "integer", "description": "Index of clip to trim (use this OR clip_id)"},
+                    "media_start": {"type": "number", "description": "New start offset in source media"},
+                    "duration": {"type": "number", "description": "New duration"}
+                },
+                "required": ["track_id"]
+            }
+        ),
+        Tool(
+            name="insert_clip",
+            description="Insert a clip at a specific position in a track. This is a PRIMARY choice for simple insertions.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "clip_type": {
+                        "type": "string",
+                        "enum": ["video", "audio", "image", "text", "gap"],
+                        "description": "Type of clip"
+                    },
+                    "source": {
+                        "type": "string",
+                        "description": "Path to media file, text content, or null for gaps"
+                    },
+                    "duration": {"type": "number", "description": "Duration in seconds"},
+                    "track_id": {"type": "string", "description": "Target track ID"},
+                    "index": {"type": "integer", "description": "Position to insert at (0-based)"}
+                },
+                "required": ["clip_type", "duration", "track_id", "index"]
             }
         ),
         Tool(
             name="apply_action",
-            description="Apply an editing action (trim_clip, apply_effect, crop_vertical, set_volume, etc.)",
+            description="Apply an editing action (trim_clip, apply_effect, crop_vertical, set_clip_volume, delete_clip, move_clip, etc.)",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -95,7 +230,7 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="get_project_info",
-            description="Get information about the current project",
+            description="Get information about the current project including tracks and clips",
             inputSchema={
                 "type": "object",
                 "properties": {}
@@ -210,38 +345,116 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
     """Handle tool calls from the MCP client."""
     try:
         logger.info(f"Tool called: {name} with args: {arguments}")
-        
+
         if name == "create_project":
             result = manager.create_project(
                 name=arguments["name"],
                 resolution=tuple(arguments.get("resolution", [1920, 1080])),
                 fps=arguments.get("fps", 30)
             )
+            track_names = [t.name for t in result.tracks]
             return [TextContent(
                 type="text",
-                text=f"Created project: {result.name} ({result.resolution[0]}x{result.resolution[1]} @ {result.fps}fps)"
+                text=f"Created project: {result.name} ({result.resolution[0]}x{result.resolution[1]} @ {result.fps}fps) with tracks: {', '.join(track_names)}"
             )]
-        
+
         elif name == "load_template":
             result = manager.load_template(arguments["template_name"])
             return [TextContent(
                 type="text",
                 text=f"Loaded template: {result.name}"
             )]
-        
-        elif name == "add_clip":
-            clip = manager.add_clip(
-                clip_type=arguments["clip_type"],
-                source=arguments["source"],
-                duration=arguments["duration"],
-                start=arguments.get("start", 0.0),
-                track_layer=arguments.get("track_layer", 1)
+
+        elif name == "create_track":
+            track = manager.create_track(
+                track_type=arguments["track_type"],
+                name=arguments.get("name")
             )
             return [TextContent(
                 type="text",
-                text=f"Added {clip.type} clip: {clip.id} (start: {clip.start}s, duration: {clip.duration}s)"
+                text=f"Created track: {track.name} (id: {track.id}, type: {track.type})"
             )]
-        
+
+        elif name == "append_clip":
+            clip = manager.append_clip(
+                clip_type=arguments["clip_type"],
+                source=arguments.get("source"),
+                duration=arguments["duration"],
+                track_id=arguments.get("track_id"),
+            )
+            return [TextContent(
+                type="text",
+                text=f"Appended {clip.type} clip: {clip.id} (duration: {clip.duration}s)"
+            )]
+
+        elif name == "advanced_add_clip":
+            clip = manager.advanced_add_clip(
+                clip_type=arguments["clip_type"],
+                source=arguments.get("source"),
+                duration=arguments["duration"],
+                track_id=arguments.get("track_id"),
+                index=arguments.get("index"),
+                media_start=arguments.get("media_start", 0.0),
+                volume=arguments.get("volume", 1.0),
+                effects=arguments.get("effects")
+            )
+            pos_desc = f"at index {arguments['index']}" if arguments.get('index') is not None else "at end"
+            return [TextContent(
+                type="text",
+                text=f"Advanced added {clip.type} clip: {clip.id} {pos_desc} (duration: {clip.duration}s)"
+            )]
+
+        elif name == "delete_clip":
+            manager.apply_action(
+                "delete_clip",
+                track_id=arguments["track_id"],
+                clip_id=arguments.get("clip_id"),
+                index=arguments.get("index")
+            )
+            return [TextContent(
+                type="text",
+                text=f"Deleted clip from track {arguments['track_id']}"
+            )]
+
+        elif name == "move_clip":
+            manager.apply_action(
+                "move_clip",
+                track_id=arguments["track_id"],
+                from_index=arguments["from_index"],
+                to_index=arguments["to_index"]
+            )
+            return [TextContent(
+                type="text",
+                text=f"Moved clip from index {arguments['from_index']} to {arguments['to_index']} in track {arguments['track_id']}"
+            )]
+
+        elif name == "trim_clip":
+            manager.apply_action(
+                "trim_clip",
+                track_id=arguments["track_id"],
+                clip_id=arguments.get("clip_id"),
+                index=arguments.get("index"),
+                media_start=arguments.get("media_start"),
+                duration=arguments.get("duration")
+            )
+            return [TextContent(
+                type="text",
+                text=f"Trimmed clip in track {arguments['track_id']}"
+            )]
+
+        elif name == "insert_clip":
+            clip = manager.insert_clip(
+                clip_type=arguments["clip_type"],
+                source=arguments.get("source"),
+                duration=arguments["duration"],
+                track_id=arguments["track_id"],
+                index=arguments["index"]
+            )
+            return [TextContent(
+                type="text",
+                text=f"Inserted {clip.type} clip: {clip.id} at index {arguments['index']} (duration: {clip.duration}s)"
+            )]
+
         elif name == "apply_action":
             result = manager.apply_action(
                 arguments["action_name"],
@@ -251,7 +464,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 type="text",
                 text=f"Applied action: {arguments['action_name']}"
             )]
-        
+
         elif name == "render_project":
             output = manager.render(
                 output_path=arguments["output_path"],
@@ -262,35 +475,35 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 type="text",
                 text=f"Rendered project to: {output}"
             )]
-        
+
         elif name == "get_project_info":
             info = manager.get_project_info()
             return [TextContent(
                 type="text",
                 text=json.dumps(info, indent=2)
             )]
-        
+
         elif name == "list_actions":
             actions = manager.list_actions()
             return [TextContent(
                 type="text",
                 text=f"Available actions: {', '.join(actions)}"
             )]
-        
+
         elif name == "list_templates":
             templates = manager.list_templates()
             return [TextContent(
                 type="text",
                 text=f"Available templates: {', '.join(templates)}"
             )]
-        
+
         elif name == "save_project":
             path = manager.save_project(arguments.get("filename"))
             return [TextContent(
                 type="text",
                 text=f"Saved project to: {path}"
             )]
-        
+
         elif name == "load_project":
             result = manager.load_project(arguments["filename"])
             return [TextContent(
@@ -341,7 +554,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 type="text",
                 text=f"Unknown tool: {name}"
             )]
-    
+
     except MovielyError as e:
         logger.error(f"Moviely error: {e}")
         return [TextContent(
@@ -376,7 +589,7 @@ async def read_resource(uri: str) -> str:
         if manager.project:
             return json.dumps(manager.project.model_dump(), indent=2)
         return json.dumps({"error": "No active project"})
-    
+
     return json.dumps({"error": f"Unknown resource: {uri}"})
 
 
@@ -384,11 +597,11 @@ def main():
     """Main entry point for the MCP server."""
     import asyncio
     from mcp.server.stdio import stdio_server
-    
+
     async def run():
         async with stdio_server() as (read_stream, write_stream):
             await app.run(read_stream, write_stream, app.create_initialization_options())
-    
+
     asyncio.run(run())
 
 

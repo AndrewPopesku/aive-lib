@@ -2,7 +2,7 @@
 
 import pytest
 from pathlib import Path
-from moviely.models import ProjectState, Clip
+from moviely.models import ProjectState, Clip, Track
 from moviely.storage.memory_store import MemoryStore
 from moviely.storage.json_store import JSONStore
 from moviely.errors import StorageError
@@ -99,18 +99,21 @@ def test_json_store_with_clips():
     """Test saving and loading projects with clips."""
     with tempfile.TemporaryDirectory() as tmpdir:
         store = JSONStore(Path(tmpdir))
-        
+
         project = ProjectState(name="WithClips", resolution=(1920, 1080), fps=30)
-        project.add_clip(Clip(
+        track = Track(id="track1", name="Video 1", type="video")
+        track.clips.append(Clip(
             id="clip1",
             type="text",
             source="Hello",
             duration=5.0
         ))
-        
+        project.tracks.append(track)
+
         store.save(project)
         loaded = store.load("WithClips.json")
-        
-        assert len(loaded.clips) == 1
-        assert loaded.clips[0].id == "clip1"
-        assert loaded.clips[0].source == "Hello"
+
+        assert len(loaded.tracks) == 1
+        assert len(loaded.tracks[0].clips) == 1
+        assert loaded.tracks[0].clips[0].id == "clip1"
+        assert loaded.tracks[0].clips[0].source == "Hello"

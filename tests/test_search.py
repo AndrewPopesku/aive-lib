@@ -1,5 +1,6 @@
 """Tests for SearchService."""
 
+import hashlib
 import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
 import httpx
@@ -317,8 +318,10 @@ class TestDownload:
 
             path = await search_service.download(result)
 
+            # Filename is now SHA-256 hash of "provider:id"
+            expected_hash = hashlib.sha256("pexels:12345".encode()).hexdigest()
             assert path.exists()
-            assert path.name == "pexels_12345.mp4"
+            assert path.name == f"{expected_hash}.mp4"
             assert path.read_bytes() == b"fake video content"
 
     @pytest.mark.asyncio
@@ -331,8 +334,9 @@ class TestDownload:
             media_type="video",
         )
 
-        # Create cached file
-        cache_path = search_service.cache_dir / "pexels_cached123.mp4"
+        # Create cached file with hash-based filename
+        cache_hash = hashlib.sha256("pexels:cached123".encode()).hexdigest()
+        cache_path = search_service.cache_dir / f"{cache_hash}.mp4"
         cache_path.write_bytes(b"cached content")
 
         # Should return cached file without making HTTP request

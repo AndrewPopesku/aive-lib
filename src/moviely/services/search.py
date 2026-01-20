@@ -1,7 +1,10 @@
 """Search service for media providers (Pexels, Pixabay, Jamendo)."""
 
+import hashlib
+import json
 import os
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal, Optional
 from urllib.parse import urlparse
@@ -115,8 +118,66 @@ class SearchService:
         limit = min(max(limit, 1), 50)
         return await self._search_jamendo(query, limit)
 
+    def _get_cache_key(self, provider: str, media_id: str) -> str:
+        """Generate a SHA-256 cache key for a media item.
+
+        Args:
+            provider: Media provider name
+            media_id: Provider's media ID
+
+        Returns:
+            SHA-256 hash string
+        """
+        key_string = f"{provider}:{media_id}"
+        return hashlib.sha256(key_string.encode()).hexdigest()
+
+    def _get_manifest_path(self) -> Path:
+        """Get the path to the cache manifest file."""
+        return self.cache_dir / "manifest.json"
+
+    async def _load_manifest(self) -> dict:
+        """Load the cache manifest from disk."""
+        manifest_path = self._get_manifest_path()
+        if not manifest_path.exists():
+            return {}
+        try:
+            async with aiofiles.open(manifest_path, "r") as f:
+                content = await f.read()
+                return json.loads(content)
+        except (json.JSONDecodeError, OSError):
+            return {}
+
+    async def _save_manifest(self, manifest: dict) -> None:
+        """Save the cache manifest to disk."""
+        manifest_path = self._get_manifest_path()
+        async with aiofiles.open(manifest_path, "w") as f:
+            await f.write(json.dumps(manifest, indent=2))
+
+    async def _update_manifest(self, cache_key: str, result: SearchResult) -> None:
+        """Add or update an entry in the cache manifest.
+
+        Args:
+            cache_key: The SHA-256 cache key
+            result: The SearchResult being cached
+        """
+        manifest = await self._load_manifest()
+        manifest[cache_key] = {
+            "provider": result.provider,
+            "id": result.id,
+            "title": result.title,
+            "author": result.author,
+            "media_type": result.media_type,
+            "url": result.url,
+            "downloaded_at": datetime.now(timezone.utc).isoformat(),
+        }
+        await self._save_manifest(manifest)
+
     async def download(self, result: SearchResult) -> Path:
         """Download a search result to local cache.
+
+        Uses SHA-256 hashing of provider:id for cache filenames to ensure
+        robust, collision-free caching. A manifest file tracks metadata
+        for debugging and UI purposes.
 
         Args:
             result: SearchResult to download
@@ -132,8 +193,9 @@ class SearchService:
             ext_map = {"video": ".mp4", "image": ".jpg", "audio": ".mp3"}
             path_ext = ext_map.get(result.media_type, ".bin")
 
-        # Create cache filename
-        filename = f"{result.provider}_{result.id}{path_ext}"
+        # Create cache filename using SHA-256 hash
+        cache_key = self._get_cache_key(result.provider, result.id)
+        filename = f"{cache_key}{path_ext}"
         cache_path = self.cache_dir / filename
 
         # Return cached file if exists
@@ -146,8 +208,14 @@ class SearchService:
             response = await client.get(result.url, follow_redirects=True)
             response.raise_for_status()
 
-            async with aiofiles.open(cache_path, "wb") as f:
+            # Write to temp file first, then move (atomic write)
+            temp_path = cache_path.with_suffix(".tmp")
+            async with aiofiles.open(temp_path, "wb") as f:
                 await f.write(response.content)
+            temp_path.rename(cache_path)
+
+            # Update manifest with metadata
+            await self._update_manifest(cache_key, result)
 
             return cache_path
         except httpx.HTTPError as e:
